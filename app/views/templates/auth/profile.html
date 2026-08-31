@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - Tienda Apple{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <!-- Menú lateral -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item bg-light">
+                        <div class="text-center py-2">
+                            <i class="fas fa-user-circle fa-4x text-secondary"></i>
+                            <h6 class="mt-2 mb-0">{{ user.nombre_completo }}</h6>
+                            <small class="text-muted">{{ user.email }}</small>
+                        </div>
+                    </div>
+                    <a href="#perfil" class="list-group-item list-group-item-action active" data-bs-toggle="tab">
+                        <i class="fas fa-id-card me-2"></i> Mi Perfil
+                    </a>
+                    <a href="#direcciones" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                        <i class="fas fa-map-marker-alt me-2"></i> Direcciones
+                    </a>
+                    <a href="#seguridad" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                        <i class="fas fa-shield-alt me-2"></i> Seguridad
+                    </a>
+                    <a href="{{ url_for('pedido.index') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-box me-2"></i> Mis Pedidos
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-action text-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="tab-content">
+            <!-- Pestaña Perfil -->
+            <div class="tab-pane fade show active" id="perfil">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-id-card me-2"></i>Información Personal</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('auth.update_profile') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Nombre Completo</label>
+                                    <input type="text" class="form-control" name="nombre_completo" 
+                                           value="{{ user.nombre_completo }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Email</label>
+                                    <input type="email" class="form-control" value="{{ user.email }}" disabled>
+                                    <small class="text-muted">El email no se puede cambiar</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Teléfono</label>
+                                    <input type="tel" class="form-control" name="telefono" 
+                                           value="{{ user.telefono or '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Empresa</label>
+                                    <input type="text" class="form-control" name="empresa" 
+                                           value="{{ perfil.empresa if perfil else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Cargo</label>
+                                    <input type="text" class="form-control" name="cargo" 
+                                           value="{{ perfil.cargo if perfil else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">País</label>
+                                    <input type="text" class="form-control" name="pais" 
+                                           value="{{ perfil.pais if perfil else 'España' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Ciudad</label>
+                                    <input type="text" class="form-control" name="ciudad" 
+                                           value="{{ perfil.ciudad if perfil else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Código Postal</label>
+                                    <input type="text" class="form-control" name="codigo_postal" 
+                                           value="{{ perfil.codigo_postal if perfil else '' }}">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label fw-semibold">Dirección</label>
+                                    <input type="text" class="form-control" name="direccion" 
+                                           value="{{ perfil.direccion if perfil else '' }}">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-dark">
+                                <i class="fas fa-save me-2"></i> Actualizar Perfil
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pestaña Direcciones -->
+            <div class="tab-pane fade" id="direcciones">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Mis Direcciones</h5>
+                        <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                            <i class="fas fa-plus me-1"></i> Nueva Dirección
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {% if direcciones %}
+                            <div class="row">
+                                {% for direccion in direcciones %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card {% if direccion.predeterminada %}border-primary{% endif %}">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="mb-1">
+                                                        {{ direccion.nombre_direccion }}
+                                                        {% if direccion.predeterminada %}
+                                                        <span class="badge bg-primary">Predeterminada</span>
+                                                        {% endif %}
+                                                    </h6>
+                                                    <p class="mb-1 small">
+                                                        {{ direccion.calle }} {{ direccion.numero or '' }}
+                                                        {% if direccion.complemento %}, {{ direccion.complemento }}{% endif %}
+                                                        <br>
+                                                        {{ direccion.codigo_postal }} {{ direccion.ciudad }}
+                                                        <br>
+                                                        {{ direccion.pais }}
+                                                    </p>
+                                                    <p class="mb-0 small text-muted">
+                                                        <i class="fas fa-phone me-1"></i> {{ direccion.telefono_contacto or 'Sin teléfono' }}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <form method="POST" action="{{ url_for('auth.delete_address', address_id=direccion.id_direccion) }}" 
+                                                          class="d-inline" onsubmit="return confirm('¿Eliminar esta dirección?')">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                                <p>No tienes direcciones guardadas</p>
+                                <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                                    <i class="fas fa-plus me-1"></i> Agregar Dirección
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pestaña Seguridad -->
+            <div class="tab-pane fade" id="seguridad">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Cambiar Contraseña</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('auth.change_password') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Contraseña Actual</label>
+                                <input type="password" class="form-control" name="current_password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Nueva Contraseña</label>
+                                <input type="password" class="form-control" name="new_password" required minlength="8">
+                                <small class="text-muted">Mínimo 8 caracteres</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Confirmar Nueva Contraseña</label>
+                                <input type="password" class="form-control" name="confirm_password" required>
+                            </div>
+                            <button type="submit" class="btn btn-dark">
+                                <i class="fas fa-key me-2"></i> Cambiar Contraseña
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Dirección -->
+<div class="modal fade" id="addAddressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Nueva Dirección</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('auth.add_address') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la dirección</label>
+                        <input type="text" class="form-control" name="nombre_direccion" placeholder="Casa, Oficina..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Calle</label>
+                        <input type="text" class="form-control" name="calle" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Número</label>
+                            <input type="text" class="form-control" name="numero">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Complemento</label>
+                            <input type="text" class="form-control" name="complemento" placeholder="Piso, Departamento...">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ciudad</label>
+                            <input type="text" class="form-control" name="ciudad" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Código Postal</label>
+                            <input type="text" class="form-control" name="codigo_postal" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estado/Provincia</label>
+                            <input type="text" class="form-control" name="estado_provincia">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">País</label>
+                            <input type="text" class="form-control" name="pais" value="España">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono de contacto</label>
+                        <input type="tel" class="form-control" name="telefono_contacto">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Instrucciones de entrega</label>
+                        <textarea class="form-control" name="instrucciones_entrega" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="predeterminada" name="predeterminada">
+                        <label class="form-check-label" for="predeterminada">Establecer como dirección predeterminada</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-dark">Guardar Dirección</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

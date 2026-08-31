@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{{ categoria.nombre }} - Tienda Apple{% endblock %}
+
+{% block content %}
+<!-- ============================================ -->
+<!-- HERO DE CATEGORÍA - MEJORADO -->
+<!-- ============================================ -->
+<section class="hero-section text-center" style="padding: 80px 0 60px; background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%); border-bottom: 1px solid #e8e8ed;">
+    <div class="container">
+        <h1 class="hero-title" style="font-size: 3.5rem; font-weight: 700; letter-spacing: -0.03em; color: #1d1d1f; margin-bottom: 0.5rem;">
+            {{ categoria.nombre }}
+        </h1>
+        <p class="hero-subtitle" style="font-size: 1.3rem; font-weight: 300; color: #86868b;">
+            {{ categoria.descripcion or 'Descubre nuestra selección de productos' }}
+        </p>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- PRODUCTOS DE LA CATEGORÍA - MEJORADO -->
+<!-- ============================================ -->
+<section class="products-section py-5">
+    <div class="container">
+        {% if productos %}
+        <div class="row g-4">
+            {% for producto in productos %}
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="product-card">
+                    <a href="{{ url_for('producto.detalle', producto_id=producto.id) }}" class="text-decoration-none">
+                        <div class="product-image">
+                            <img src="{{ producto.imagen_url }}" 
+                                 alt="{{ producto.nombre }}" 
+                                 loading="lazy"
+                                 onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'text-align:center;padding:40px;\'><i class=\'fas fa-image fa-3x text-muted\'></i><p style=\'font-size:0.8rem;color:#86868b;margin-top:8px;\'>{{ producto.nombre }}</p></div>'">
+                            {% if producto.precio_base < 500 %}
+                            <span class="badge-oferta">Oferta</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">{{ producto.nombre }}</h3>
+                            <p class="product-description">{{ producto.descripcion[:60] if producto.descripcion else '' }}...</p>
+                            <div class="product-price">${{ "%.2f"|format(producto.precio_base) }}</div>
+                            <div class="product-actions">
+                                {% if current_user.is_authenticated %}
+                                <button class="btn btn-apple btn-sm w-100 btn-agregar-carrito" 
+                                        data-variante-id="{{ producto.variantes[0].id if producto.variantes else '' }}"
+                                        data-cantidad="1">
+                                    <i class="fas fa-plus me-1"></i> Agregar
+                                </button>
+                                {% else %}
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-apple btn-sm w-100">
+                                    <i class="fas fa-plus me-1"></i> Agregar
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-box-open fa-4x text-muted mb-4"></i>
+            <h4 class="fw-light">No hay productos en esta categoría</h4>
+            <p class="text-muted">Pronto agregaremos nuevos productos</p>
+            <a href="{{ url_for('producto.index') }}" class="btn btn-apple mt-3">
+                <i class="fas fa-arrow-left me-2"></i> Volver a la tienda
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

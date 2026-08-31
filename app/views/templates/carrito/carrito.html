@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Carrito de Compras - Tienda Apple{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">
+    <i class="fas fa-shopping-cart me-2"></i> Carrito de Compras
+</h1>
+
+{% if carrito and carrito.lineas %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Lista de productos en el carrito -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                {% for linea in carrito.lineas %}
+                <div class="cart-item d-flex align-items-center p-3 border-bottom">
+                    <!-- Imagen -->
+                    {% set producto = linea.variante_producto.producto if linea.variante_producto else None %}
+                    <img src="{{ producto.imagen_url or 'https://images.unsplash.com/photo-1510557880100-43aa80b5e834?w=80&h=80&fit=crop' }}" 
+                         alt="{{ producto.nombre or 'Producto' }}"
+                         style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                    
+                    <!-- Información -->
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="mb-0">{{ producto.nombre or 'Producto' }}</h6>
+                        <small class="text-muted">
+                            {% if linea.variante_producto.color %}{{ linea.variante_producto.color }}{% endif %}
+                            {% if linea.variante_producto.capacidad %} - {{ linea.variante_producto.capacidad }}{% endif %}
+                            {% if linea.variante_producto.tamaño %} - {{ linea.variante_producto.tamaño }}{% endif %}
+                        </small>
+                        <div class="mt-1">
+                            <span class="fw-bold text-primary">${{ "%.2f"|format(linea.precio_unitario) }}</span>
+                            <span class="text-muted small">c/u</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Cantidad -->
+                    <div class="d-flex align-items-center me-3">
+                        <button class="btn btn-sm btn-outline-secondary update-cart" 
+                                data-linea-id="{{ linea.id_linea_carrito }}" 
+                                data-cantidad="{{ linea.cantidad - 1 }}"
+                                {% if linea.cantidad <= 1 %}disabled{% endif %}>
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span class="mx-2" style="min-width: 30px; text-align: center;">{{ linea.cantidad }}</span>
+                        <button class="btn btn-sm btn-outline-secondary update-cart" 
+                                data-linea-id="{{ linea.id_linea_carrito }}" 
+                                data-cantidad="{{ linea.cantidad + 1 }}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Total y eliminar -->
+                    <div class="text-end">
+                        <div class="fw-bold">${{ "%.2f"|format(linea.cantidad * linea.precio_unitario) }}</div>
+                        <button class="btn btn-sm btn-danger remove-cart" 
+                                data-linea-id="{{ linea.id_linea_carrito }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="d-flex justify-content-between mt-3">
+            <a href="{{ url_for('producto.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Seguir comprando
+            </a>
+            <button class="btn btn-outline-danger" id="vaciarCarrito">
+                <i class="fas fa-trash me-2"></i> Vaciar carrito
+            </button>
+        </div>
+    </div>
+    
+    <!-- Resumen del pedido -->
+    <div class="col-lg-4 mt-4 mt-lg-0">
+        <div class="card shadow-sm border-0 sticky-top" style="top: 80px;">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0">Resumen del Pedido</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal ({{ carrito.total_items }} items)</span>
+                    <span>${{ "%.2f"|format(carrito.subtotal) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Descuentos</span>
+                    <span class="text-success">-${{ "%.2f"|format(carrito.descuentos) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Envío</span>
+                    <span class="text-success">Gratis</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total</strong>
+                    <strong class="h5 text-primary">${{ "%.2f"|format(carrito.total) }}</strong>
+                </div>
+                
+                <!-- Cupón -->
+                <form action="{{ url_for('carrito.aplicar_cupon') }}" method="POST" class="mb-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="codigo" placeholder="Código de cupón"
+                               {% if carrito.codigo_cupon %}value="{{ carrito.codigo_cupon }}"{% endif %}>
+                        <button class="btn btn-outline-dark" type="submit">
+                            <i class="fas fa-gift"></i>
+                        </button>
+                    </div>
+                    {% if carrito.codigo_cupon %}
+                    <small class="text-success">
+                        <i class="fas fa-check-circle me-1"></i> Cupón aplicado: {{ carrito.codigo_cupon }}
+                        <a href="{{ url_for('carrito.quitar_cupon') }}" class="text-danger ms-2" 
+                           onclick="return confirm('¿Quitar el cupón?')">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </small>
+                    {% endif %}
+                </form>
+                
+                <!-- Botón de checkout -->
+                <a href="{{ url_for('pedido.crear') }}" class="btn btn-dark w-100 btn-lg">
+                    <i class="fas fa-credit-card me-2"></i> Proceder al Pago
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Actualizar cantidad
+    $('.update-cart').on('click', function() {
+        const lineaId = $(this).data('linea-id');
+        const cantidad = $(this).data('cantidad');
+        
+        if (cantidad <= 0) {
+            if (!confirm('¿Eliminar este producto del carrito?')) return;
+        }
+        
+        $.ajax({
+            url: `/carrito/actualizar/${lineaId}`,
+            method: 'POST',
+            data: {
+                cantidad: cantidad,
+                csrf_token: $('input[name="csrf_token"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            },
+            error: function() {
+                alert('Error actualizando el carrito');
+            }
+        });
+    });
+    
+    // Eliminar producto
+    $('.remove-cart').on('click', function() {
+        if (!confirm('¿Eliminar este producto del carrito?')) return;
+        
+        const lineaId = $(this).data('linea-id');
+        
+        $.ajax({
+            url: `/carrito/eliminar/${lineaId}`,
+            method: 'POST',
+            data: {
+                csrf_token: $('input[name="csrf_token"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            },
+            error: function() {
+                alert('Error eliminando producto');
+            }
+        });
+    });
+    
+    // Vaciar carrito
+    $('#vaciarCarrito').on('click', function() {
+        if (!confirm('¿Vaciar completamente el carrito?')) return;
+        
+        $.ajax({
+            url: '/carrito/vaciar',
+            method: 'POST',
+            data: {
+                csrf_token: $('input[name="csrf_token"]').val()
+            },
+            success: function() {
+                location.reload();
+            },
+            error: function() {
+                alert('Error vaciando el carrito');
+            }
+        });
+    });
+});
+</script>
+
+{% else %}
+<!-- Carrito vacío -->
+<div class="text-center py-5">
+    <i class="fas fa-shopping-cart fa-5x text-muted mb-4"></i>
+    <h4>Tu carrito está vacío</h4>
+    <p class="text-muted">Parece que aún no has agregado productos a tu carrito</p>
+    <a href="{{ url_for('producto.index') }}" class="btn btn-dark btn-lg">
+        <i class="fas fa-store me-2"></i> Comenzar a comprar
+    </a>
+</div>
+{% endif %}
+{% endblock %}

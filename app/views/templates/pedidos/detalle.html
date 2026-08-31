@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle del Pedido #{{ pedido.id[:8] }} - Tienda Apple{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="h3"><i class="fas fa-receipt me-2"></i> Detalle del Pedido</h1>
+        <p class="text-muted mb-0">Pedido #{{ pedido.id }}</p>
+    </div>
+    <div><a href="{{ url_for('pedido.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i> Volver a mis pedidos</a></div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-transparent"><h5 class="mb-0">Productos</h5></div>
+            <div class="card-body p-0">
+                {% set lineas = pedido.get_lineas() %}
+                {% if lineas %}
+                    {% for linea in lineas %}
+                    {% set producto = linea.get_producto() if linea else None %}
+                    <div class="d-flex align-items-center p-3 border-bottom">
+                        <img src="{{ producto.imagen_url if producto and producto.imagen_url else 'https://images.unsplash.com/photo-1510557880100-43aa80b5e834?w=60&h=60&fit=crop' }}" alt="{{ producto.nombre if producto else 'Producto' }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                        <div class="ms-3 flex-grow-1">
+                            <h6 class="mb-0">{{ producto.nombre if producto else 'Producto no disponible' }}</h6>
+                            <small class="text-muted">{% if linea.variante and linea.variante.color %}{{ linea.variante.color }}{% endif %}{% if linea.variante and linea.variante.capacidad %} - {{ linea.variante.capacidad }}{% endif %}</small>
+                        </div>
+                        <div class="text-end"><div>{{ linea.cantidad }} x ${{ "%.2f"|format(linea.precio_unitario) }}</div><div class="fw-bold">${{ "%.2f"|format(linea.total_linea) }}</div></div>
+                    </div>
+                    {% endfor %}
+                {% else %}<div class="text-center py-4"><p class="text-muted mb-0">No se encontraron productos para este pedido.</p></div>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 sticky-top" style="top: 80px;">
+            <div class="card-header bg-transparent"><h5 class="mb-0">Resumen del Pedido</h5></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>${{ "%.2f"|format(pedido.subtotal) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Envío</span><span>${{ "%.2f"|format(pedido.gastos_envio) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Impuestos (21%)</span><span>${{ "%.2f"|format(pedido.impuestos) }}</span></div>
+                {% if pedido.descuento_total > 0 %}<div class="d-flex justify-content-between mb-2 text-success"><span>Descuentos</span><span>-${{ "%.2f"|format(pedido.descuento_total) }}</span></div>{% endif %}
+                <hr><div class="d-flex justify-content-between"><strong>Total</strong><strong class="h5 text-primary">${{ "%.2f"|format(pedido.total) }}</strong></div>
+                <div class="mt-2"><span class="fw-semibold">Método de pago:</span> <span>{{ pedido.metodo_pedido|title if pedido.metodo_pedido else 'No especificado' }}</span></div>
+                {% if pedido.notas %}<div class="mt-2"><span class="fw-semibold">Notas:</span><p class="text-muted small">{{ pedido.notas }}</p></div>{% endif %}
+
+                <!-- Admin: confirmar -->
+                {% if current_user.is_admin and pedido.estado == 'pendiente' %}
+                <hr>
+                <form method="POST" action="{{ url_for('pedido.admin_confirmar_pedido', pedido_id=pedido.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-success w-100"><i class="fas fa-check-circle me-2"></i> Confirmar Pedido y Facturar</button>
+                </form>
+                {% endif %}
+
+                <!-- Factura - SIN target="_blank" -->
+                {% if pedido.estado != 'pendiente' %}
+                <hr>
+                <a href="{{ url_for('pedido.factura', pedido_id=pedido.id) }}" class="btn btn-info w-100">
+                    <i class="fas fa-file-invoice me-2"></i> Ver Factura
+                </a>
+                {% endif %}
+
+                <!-- Cancelar (cliente) -->
+                {% if pedido.puede_cancelar() %}
+                <hr>
+                <form method="POST" action="{{ url_for('pedido.cancelar', pedido_id=pedido.id) }}" onsubmit="return confirm('¿Estás seguro de cancelar este pedido?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger w-100"><i class="fas fa-times me-2"></i> Cancelar Pedido</button>
+                </form>
+                {% endif %}
+
+                {% if pedido.estado == 'enviado' %}
+                <hr>
+                <form method="POST" action="{{ url_for('pedido.confirmar_recibido', pedido_id=pedido.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-success w-100"><i class="fas fa-check me-2"></i> Confirmar Recibido</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

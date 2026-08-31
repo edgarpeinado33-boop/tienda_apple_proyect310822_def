@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Subir Imagen - {{ producto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-image me-2"></i> Subir Imagen
+        </h1>
+        <div>
+            <a href="{{ url_for('admin.editar_producto', producto_id=producto.id_producto) }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i> Volver
+            </a>
+            <a href="{{ url_for('admin.gestion_productos') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-2"></i> Productos
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tag me-2"></i> {{ producto.nombre }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if producto.imagen_url %}
+                        <div class="position-relative d-inline-block">
+                            <img src="{{ producto.imagen_url }}" 
+                                 alt="{{ producto.nombre }}" 
+                                 style="max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 12px; border: 1px solid #e8e8ed;">
+                            <span class="badge bg-success position-absolute top-0 end-0 m-2">
+                                <i class="fas fa-check-circle me-1"></i> Actual
+                            </span>
+                        </div>
+                        <p class="text-muted small mt-2">Imagen actual del producto</p>
+                        {% else %}
+                        <div class="py-5 bg-light rounded-3">
+                            <i class="fas fa-image fa-5x text-muted"></i>
+                            <p class="text-muted mt-3">Este producto no tiene imagen</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-file-image me-2"></i> Seleccionar imagen
+                            </label>
+                            <div class="input-group">
+                                <input type="file" class="form-control" name="imagen" accept="image/*" required>
+                            </div>
+                            <div class="mt-2">
+                                <span class="badge bg-light text-dark me-1"><i class="fas fa-check-circle text-success me-1"></i>PNG</span>
+                                <span class="badge bg-light text-dark me-1"><i class="fas fa-check-circle text-success me-1"></i>JPG</span>
+                                <span class="badge bg-light text-dark me-1"><i class="fas fa-check-circle text-success me-1"></i>JPEG</span>
+                                <span class="badge bg-light text-dark me-1"><i class="fas fa-check-circle text-success me-1"></i>GIF</span>
+                                <span class="badge bg-light text-dark me-1"><i class="fas fa-check-circle text-success me-1"></i>WEBP</span>
+                                <span class="badge bg-light text-dark me-1"><i class="fas fa-check-circle text-success me-1"></i>SVG</span>
+                                <span class="badge bg-light text-dark"><i class="fas fa-check-circle text-success me-1"></i>BMP</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-dark w-100 py-2">
+                            <i class="fas fa-upload me-2"></i> Subir Imagen
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i> Recomendaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                            <i class="fas fa-expand text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Tamaño recomendado</h6>
+                            <p class="text-muted small mb-0">400x300 píxeles para una visualización óptima</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle me-3">
+                            <i class="fas fa-file-image text-success"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Formato recomendado</h6>
+                            <p class="text-muted small mb-0">JPG o PNG para mejor calidad y compatibilidad</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                            <i class="fas fa-weight-hanging text-warning"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Peso máximo</h6>
+                            <p class="text-muted small mb-0">2MB para mantener la velocidad de carga</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle me-3">
+                            <i class="fas fa-palette text-info"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Fondo recomendado</h6>
+                            <p class="text-muted small mb-0">Fondo blanco o transparente para mejor integración</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Información del producto</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><strong><i class="fas fa-tag me-1"></i> Nombre:</strong> {{ producto.nombre }}</li>
+                        <li class="mb-2"><strong><i class="fas fa-id-card me-1"></i> ID:</strong> <code>{{ producto.id_producto[:8] }}...</code></li>
+                        <li class="mb-0"><strong><i class="fas fa-dollar-sign me-1"></i> Precio:</strong> ${{ "%.2f"|format(producto.precio_base) }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

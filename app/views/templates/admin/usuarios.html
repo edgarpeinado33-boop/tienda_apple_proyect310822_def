@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios - Administración{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3"><i class="fas fa-users me-2"></i> Gestión de Usuarios</h1>
+</div>
+
+<!-- Búsqueda -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.gestion_usuarios') }}" class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="search" placeholder="Buscar por nombre o email..." 
+                           value="{{ search or '' }}">
+                    <button class="btn btn-dark" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <a href="{{ url_for('admin.gestion_usuarios') }}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-undo me-1"></i> Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de usuarios -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Roles</th>
+                        <th>Registro</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-circle fa-2x text-secondary me-2"></i>
+                                <div>
+                                    <div class="fw-semibold">{{ usuario.nombre_completo }}</div>
+                                    <small class="text-muted">ID: {{ usuario.id_usuario[:8] }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {{ usuario.email }}
+                            {% if usuario.email_verificado %}
+                            <span class="text-success"><i class="fas fa-check-circle" title="Verificado"></i></span>
+                            {% else %}
+                            <span class="text-warning"><i class="fas fa-times-circle" title="No verificado"></i></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set roles = usuario.USUARIO_ROL|selectattr('ROL')|map(attribute='ROL.nombre_rol')|list %}
+                            {% for rol in roles %}
+                            <span class="badge bg-secondary">{{ rol }}</span>
+                            {% else %}
+                            <span class="text-muted">Sin rol</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <small>{{ usuario.fecha_registro[:10] }}</small>
+                            <br>
+                            <small class="text-muted">{{ usuario.fecha_registro[11:16] }}</small>
+                        </td>
+                        <td>
+                            {% if usuario.activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <form method="POST" action="{{ url_for('admin.cambiar_estado_usuario', usuario_id=usuario.id_usuario) }}" 
+                                      style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-outline-{{ 'success' if not usuario.activo else 'danger' }}"
+                                            {% if usuario.id_usuario == current_user.id %}disabled{% endif %}>
+                                        <i class="fas fa-{{ 'user-check' if not usuario.activo else 'user-slash' }}"></i>
+                                    </button>
+                                </form>
+                                <button class="btn btn-outline-primary" data-bs-toggle="modal" 
+                                        data-bs-target="#cambiarRolModal{{ usuario.id_usuario }}">
+                                    <i class="fas fa-user-tag"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fas fa-users fa-3x d-block mb-2"></i>
+                            No hay usuarios registrados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modales para cambiar rol -->
+{% for usuario in usuarios %}
+<div class="modal fade" id="cambiarRolModal{{ usuario.id_usuario }}" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Cambiar Rol - {{ usuario.nombre_completo }}</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.cambiar_rol_usuario') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="usuario_id" value="{{ usuario.id_usuario }}">
+                    <div class="mb-3">
+                        <label class="form-label">Nuevo Rol</label>
+                        <select class="form-select" name="rol_id">
+                            <option value="">Seleccionar...</option>
+                            <option value="1">Super Admin</option>
+                            <option value="2">Admin Tienda</option>
+                            <option value="3">Admin Productos</option>
+                            <option value="4">Admin Pedidos</option>
+                            <option value="5">Admin Facturación</option>
+                            <option value="6">Vendedor</option>
+                            <option value="7">Cliente</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-dark btn-sm">Cambiar Rol</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Paginación -->
+{% if total > per_page %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.gestion_usuarios', page=page-1, search=search) if page > 1 else '#' }}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+        {% set total_pages = ((total - 1) // per_page) + 1 %}
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+            <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+            {% elif p <= 3 or p > total_pages - 2 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.gestion_usuarios', page=p, search=search) }}">{{ p }}</a>
+            </li>
+            {% elif p == 4 and total_pages > 6 %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.gestion_usuarios', page=page+1, search=search) if page < total_pages else '#' }}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

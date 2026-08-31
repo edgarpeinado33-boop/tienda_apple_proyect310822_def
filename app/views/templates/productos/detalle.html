@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block title %}{{ producto.nombre }} - Tienda Apple{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('producto.index') }}">Inicio</a></li>
+        {% for categoria in categorias %}
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('producto.por_categoria', slug=categoria.slug) }}">{{ categoria.nombre }}</a>
+        </li>
+        {% endfor %}
+        <li class="breadcrumb-item active">{{ producto.nombre }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Imágenes -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-3">
+                <!-- Imagen principal -->
+                <div class="position-relative">
+                    <img id="mainImage" 
+                         src="{% if variantes and variantes[0].get_imagen_principal() %}{{ variantes[0].get_imagen_principal() }}{% else %}{{ producto.imagen_url or 'https://images.unsplash.com/photo-1510557880100-43aa80b5e834?w=600&h=600&fit=crop' }}{% endif %}" 
+                         alt="{{ producto.nombre }}"
+                         class="img-fluid rounded" 
+                         style="width: 100%; height: 400px; object-fit: contain; background: #f8f9fa;">
+                </div>
+                <!-- Miniaturas -->
+                {% if variantes and variantes[0].get_imagenes() %}
+                <div class="row mt-3 g-2">
+                    {% for imagen in variantes[0].get_imagenes() %}
+                    <div class="col-3">
+                        <img src="{{ imagen.url_imagen }}" 
+                             alt="{{ imagen.descripcion or 'Imagen' }}"
+                             class="img-fluid rounded cursor-pointer thumbnail"
+                             onclick="document.getElementById('mainImage').src = this.src"
+                             style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;">
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detalles -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h1 class="h3 mb-2">{{ producto.nombre }}</h1>
+                
+                {% if producto.marca %}
+                <p class="text-muted small">
+                    <i class="fas fa-tag me-1"></i> {{ producto.marca }}
+                    {% if producto.familia %}
+                    <span class="mx-2">|</span> {{ producto.familia }}
+                    {% endif %}
+                </p>
+                {% endif %}
+                
+                <!-- Calificación -->
+                <div class="mb-3">
+                    <span class="text-warning">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </span>
+                    <span class="text-muted small">({{ reseñas|length }} reseñas)</span>
+                </div>
+                
+                <div class="mb-3">
+                    <span class="h2 text-primary" id="precioDisplay">
+                        ${{ "%.2f"|format(producto.precio_base) }}
+                    </span>
+                </div>
+                
+                <p class="text-muted">{{ producto.descripcion or 'Sin descripción disponible' }}</p>
+                
+                <!-- Variantes -->
+                {% if variantes %}
+                <div class="mb-3">
+                    <label class="fw-semibold">Color:</label>
+                    <div class="d-flex flex-wrap gap-2 mt-1">
+                        {% for variante in variantes %}
+                        <button class="btn btn-outline-secondary btn-sm variante-btn {% if loop.first %}active{% endif %}" 
+                                data-variante-id="{{ variante.id }}"
+                                data-precio="{{ "%.2f"|format(variante.precio_total) }}"
+                                data-stock="{{ variante.stock_disponible }}"
+                                data-color="{{ variante.color or 'Default' }}"
+                                style="border-radius: 20px;">
+                            {% if variante.color %}
+                            <span class="d-inline-block rounded-circle me-1" 
+                                  style="width: 12px; height: 12px; background: {{ variante.color|lower }};"></span>
+                            {% endif %}
+                            {{ variante.color or variante.capacidad or 'Estándar' }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Capacidad/Tamaño -->
+                {% if variantes|selectattr('capacidad')|list %}
+                <div class="mb-3">
+                    <label class="fw-semibold">Capacidad:</label>
+                    <div class="d-flex flex-wrap gap-2 mt-1">
+                        {% for variante in variantes|selectattr('capacidad') %}
+                        <button class="btn btn-outline-secondary btn-sm capacidad-btn" 
+                                data-variante-id="{{ variante.id }}"
+                                data-precio="{{ "%.2f"|format(variante.precio_total) }}"
+                                data-stock="{{ variante.stock_disponible }}">
+                            {{ variante.capacidad }}
+                            {% if variante.precio_extra > 0 %}
+                            <span class="text-muted small">(+${{ "%.2f"|format(variante.precio_extra) }})</span>
+                            {% endif %}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endif %}
+                
+                <!-- Stock -->
+                <div class="mb-3">
+                    <span id="stockDisplay" class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i> En stock
+                    </span>
+                    <span class="text-muted small" id="stockCantidadDisplay">
+                        ({{ variantes[0].stock_disponible if variantes else 0 }} unidades)
+                    </span>
+                </div>
+                
+                <!-- Cantidad -->
+                {% if current_user.is_authenticated %}
+                <form id="addToCartForm" action="{{ url_for('carrito.agregar') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="variante_id" id="selectedVariante" 
+                           value="{{ variantes[0].id if variantes else '' }}">
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary" type="button" id="decrementQty">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" class="form-control text-center" id="cantidad" 
+                                       name="cantidad" value="1" min="1" max="10">
+                                <button class="btn btn-outline-secondary" type="button" id="incrementQty">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-8">
+                            <button type="submit" class="btn btn-apple w-100" id="addToCartBtn">
+                                <i class="fas fa-shopping-cart me-2"></i> Agregar al Carrito
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                <div class="row g-2">
+                    <div class="col-4">
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" disabled>
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" value="1" disabled>
+                            <button class="btn btn-outline-secondary" type="button" disabled>
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-8">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-apple w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i> Iniciar sesión para comprar
+                        </a>
+                    </div>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    <i class="fas fa-info-circle me-1"></i> Necesitas iniciar sesión para agregar productos al carrito
+                </small>
+                {% endif %}
+                
+                <!-- Características adicionales -->
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="fas fa-truck me-2"></i> Envío gratis desde $50
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="fas fa-undo me-2"></i> Devoluciones 30 días
+                        </div>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="fas fa-shield-alt me-2"></i> Garantía Apple 1 año
+                        </div>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="fas fa-credit-card me-2"></i> Financiación disponible
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reseñas y Productos relacionados -->
+<div class="row mt-5">
+    <!-- Reseñas -->
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0">
+                    <i class="fas fa-star text-warning me-2"></i> Reseñas de Clientes
+                    <span class="badge bg-secondary ms-2">{{ reseñas|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if reseñas %}
+                    {% for reseña in reseñas %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-0">{{ reseña.USUARIO.nombre_completo if reseña.USUARIO else 'Usuario' }}</h6>
+                                <div class="text-warning small">
+                                    {% for i in range(reseña.calificacion) %}
+                                    <i class="fas fa-star"></i>
+                                    {% endfor %}
+                                    {% for i in range(5 - reseña.calificacion) %}
+                                    <i class="far fa-star"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ reseña.fecha_creacion[:10] }}</small>
+                        </div>
+                        {% if reseña.titulo %}
+                        <p class="fw-semibold mb-1">{{ reseña.titulo }}</p>
+                        {% endif %}
+                        <p class="mb-0">{{ reseña.comentario }}</p>
+                        {% if reseña.respuesta_admin %}
+                        <div class="bg-light p-2 mt-2 rounded">
+                            <small><strong>Respuesta del vendedor:</strong> {{ reseña.respuesta_admin }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center py-3">
+                        <i class="fas fa-comment fa-2x d-block mb-2"></i>
+                        No hay reseñas para este producto
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Productos relacionados -->
+    {% if relacionados %}
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0"><i class="fas fa-link me-2"></i> Productos Relacionados</h5>
+            </div>
+            <div class="card-body">
+                {% for producto in relacionados %}
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ producto.imagen_url or 'https://images.unsplash.com/photo-1510557880100-43aa80b5e834?w=60&h=60&fit=crop' }}" 
+                         alt="{{ producto.nombre }}"
+                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                    <div class="ms-3">
+                        <h6 class="mb-0 small">{{ producto.nombre }}</h6>
+                        <span class="text-primary small">${{ "%.2f"|format(producto.precio_base) }}</span>
+                        <a href="{{ url_for('producto.detalle', producto_id=producto.id) }}" 
+                           class="d-block small text-decoration-none">Ver producto</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Obtener stock inicial
+let currentStock = parseInt(document.querySelector('.variante-btn.active')?.dataset?.stock || 0);
+actualizarStockDisplay(currentStock);
+
+// Selector de variantes
+document.querySelectorAll('.variante-btn, .capacidad-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.variante-btn, .capacidad-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const varianteId = this.dataset.varianteId;
+        const precio = this.dataset.precio;
+        const stock = parseInt(this.dataset.stock);
+        
+        document.getElementById('selectedVariante').value = varianteId;
+        document.getElementById('precioDisplay').textContent = '$' + precio;
+        
+        // Actualizar stock
+        actualizarStockDisplay(stock);
+    });
+});
+
+function actualizarStockDisplay(stock) {
+    const stockDisplay = document.getElementById('stockDisplay');
+    const stockCantidad = document.getElementById('stockCantidadDisplay');
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    const cantidadInput = document.getElementById('cantidad');
+    
+    if (stock > 0) {
+        stockDisplay.className = 'badge bg-success';
+        stockDisplay.innerHTML = '<i class="fas fa-check-circle me-1"></i> En stock';
+        stockCantidad.textContent = `(${stock} unidades)`;
+        if (addToCartBtn) addToCartBtn.disabled = false;
+        if (cantidadInput) cantidadInput.max = Math.min(stock, 10);
+    } else {
+        stockDisplay.className = 'badge bg-danger';
+        stockDisplay.innerHTML = '<i class="fas fa-times-circle me-1"></i> Agotado';
+        stockCantidad.textContent = '(Sin stock)';
+        if (addToCartBtn) addToCartBtn.disabled = true;
+        if (cantidadInput) {
+            cantidadInput.value = 0;
+            cantidadInput.max = 0;
+        }
+    }
+}
+
+// Controles de cantidad (solo si el usuario está logueado)
+{% if current_user.is_authenticated %}
+document.getElementById('decrementQty').addEventListener('click', function() {
+    const input = document.getElementById('cantidad');
+    let value = parseInt(input.value);
+    const maxStock = parseInt(input.max) || 10;
+    if (value > 1 && value <= maxStock) {
+        input.value = value - 1;
+    }
+});
+
+document.getElementById('incrementQty').addEventListener('click', function() {
+    const input = document.getElementById('cantidad');
+    let value = parseInt(input.value);
+    const maxStock = parseInt(input.max) || 10;
+    if (value < maxStock) {
+        input.value = value + 1;
+    }
+});
+
+// Validar cantidad al cambiar manualmente
+document.getElementById('cantidad').addEventListener('change', function() {
+    const input = this;
+    let value = parseInt(input.value);
+    const maxStock = parseInt(input.max) || 10;
+    if (isNaN(value) || value < 1) {
+        input.value = 1;
+    } else if (value > maxStock) {
+        input.value = maxStock;
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

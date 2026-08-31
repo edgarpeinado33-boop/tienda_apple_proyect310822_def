@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Productos - Administración{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-boxes me-2"></i> Gestión de Productos
+        </h1>
+        <div>
+            <a href="{{ url_for('admin.crear_producto') }}" class="btn btn-dark">
+                <i class="fas fa-plus me-2"></i> Nuevo Producto
+            </a>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-arrow-left me-2"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Búsqueda -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search" placeholder="Buscar productos por nombre..." value="{{ search or '' }}">
+                        <button class="btn btn-dark" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('admin.gestion_productos') }}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-undo me-1"></i> Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 70px;">Imagen</th>
+                            <th>Producto</th>
+                            <th>Familia</th>
+                            <th style="width: 120px;">Precio</th>
+                            <th style="width: 110px;">Estado</th>
+                            <th style="width: 240px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                        <tr>
+                            <td>
+                                {% if producto.imagen_url %}
+                                <img src="{{ producto.imagen_url }}" 
+                                     alt="{{ producto.nombre }}"
+                                     style="width: 55px; height: 55px; object-fit: cover; border-radius: 10px; border: 1px solid #e8e8ed;">
+                                {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; border-radius: 10px; border: 1px solid #e8e8ed;">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ producto.nombre }}</div>
+                                <small class="text-muted">{{ producto.descripcion[:60] if producto.descripcion else '' }}...</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark fw-normal">{{ producto.familia or 'N/A' }}</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-primary">${{ "%.2f"|format(producto.precio_base) }}</span>
+                            </td>
+                            <td>
+                                <span class="badge {% if producto.estado == 'activo' %}bg-success{% elif producto.estado == 'inactivo' %}bg-secondary{% else %}bg-danger{% endif %}">
+                                    {% if producto.estado == 'activo' %}
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                    {% elif producto.estado == 'inactivo' %}
+                                    <i class="fas fa-circle me-1"></i> Inactivo
+                                    {% elif producto.estado == 'proximo' %}
+                                    <i class="fas fa-clock me-1"></i> Próximo
+                                    {% else %}
+                                    <i class="fas fa-times-circle me-1"></i> Discontinuado
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <a href="{{ url_for('admin.editar_producto', producto_id=producto.id_producto) }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="Editar producto"
+                                       style="border-radius: 8px; padding: 6px 12px;">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </a>
+                                    <a href="{{ url_for('admin.subir_imagen', producto_id=producto.id_producto) }}" 
+                                       class="btn btn-sm btn-outline-success" 
+                                       title="Subir imagen"
+                                       style="border-radius: 8px; padding: 6px 12px;">
+                                        <i class="fas fa-image"></i> Imagen
+                                    </a>
+                                    <a href="{{ url_for('producto.detalle', producto_id=producto.id_producto) }}" 
+                                       class="btn btn-sm btn-outline-info" 
+                                       title="Ver en tienda" 
+                                       target="_blank"
+                                       style="border-radius: 8px; padding: 6px 12px;">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            title="Eliminar" 
+                                            style="border-radius: 8px; padding: 6px 12px;"
+                                            onclick="eliminarProducto('{{ producto.id_producto }}', '{{ producto.nombre }}')">
+                                        <i class="fas fa-trash-alt"></i> Eliminar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="fas fa-box-open fa-4x text-muted mb-3 d-block"></i>
+                                <h5 class="fw-light mb-2">No hay productos</h5>
+                                <p class="text-muted mb-3">Comienza agregando tu primer producto</p>
+                                <a href="{{ url_for('admin.crear_producto') }}" class="btn btn-dark">
+                                    <i class="fas fa-plus me-2"></i> Agregar producto
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    {% if total > per_page %}
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.gestion_productos', page=page-1, search=search) if page > 1 else '#' }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% set total_pages = ((total - 1) // per_page) + 1 %}
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                {% elif p <= 3 or p > total_pages - 2 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.gestion_productos', page=p, search=search) }}">{{ p }}</a>
+                </li>
+                {% elif p == 4 and total_pages > 6 %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.gestion_productos', page=page+1, search=search) if page < total_pages else '#' }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+function eliminarProducto(productoId, nombre) {
+    if (confirm(`¿Estás seguro de eliminar el producto "${nombre}"?`)) {
+        fetch(`/admin/productos/eliminar/${productoId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error eliminando el producto');
+        });
+    }
+}
+</script>
+{% endblock %}

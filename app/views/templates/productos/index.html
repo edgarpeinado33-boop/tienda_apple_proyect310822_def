@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Tienda Apple{% endblock %}
+
+{% block content %}
+<!-- ============================================ -->
+<!-- 1. EVENTO ESPECIAL -->
+<!-- ============================================ -->
+<section class="event-section" style="background-image: url('{{ url_for('static', filename='img/Apple-Surprise-Shine.jpg') }}'); background-size: cover; background-position: center; min-height: 500px; height: 500px; width: 100%; display: flex; align-items: center; justify-content: center; background-color: #1d1d1f;">
+    <div class="container" style="position: relative; z-index: 2;">
+        <div class="event-content text-center" style="background: rgba(0,0,0,0.45); padding: 50px 30px; border-radius: 20px; backdrop-filter: blur(6px); max-width: 650px; margin: 0 auto;">
+            <div class="event-icon">
+                <i class="fas fa-star fa-2x" style="color: #ffcc00; margin-bottom: 0.8rem;"></i>
+            </div>
+            <h2 class="event-title" style="color: #ffffff; font-size: 2.8rem; font-weight: 700; letter-spacing: -0.03em; text-shadow: 0 2px 20px rgba(0,0,0,0.5);">
+                Sorpresas listas para brillar.
+            </h2>
+            <p class="event-subtitle" style="color: rgba(255,255,255,0.9); font-size: 1.2rem; font-weight: 300; margin-bottom: 1.5rem; text-shadow: 0 1px 15px rgba(0,0,0,0.5);">
+                Mira el evento especial de Apple online el 9 de septiembre a las 10 a.m. (PT).
+            </p>
+            <a href="#" class="btn btn-event" style="background: rgba(255,255,255,0.12); color: #ffffff; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(4px); padding: 0.7rem 2rem; border-radius: 980px; font-weight: 500; transition: all 0.3s ease; display: inline-flex; align-items: center; text-decoration: none;">
+                <i class="far fa-calendar-plus me-2"></i>Agregar al calendario
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 2. MAC MINI - DESTACADO -->
+<!-- ============================================ -->
+<section class="feature-section mac-mini-section text-center">
+    <div class="container">
+        <div class="feature-content">
+            <span class="feature-badge">Nuevo</span>
+            <h2 class="feature-title">Mac mini</h2>
+            <p class="feature-subtitle">Ahora con los chips M6 y M5 Pro.</p>
+            <p class="feature-status">Consulta la disponibilidad más adelante</p>
+            <a href="{{ url_for('producto.por_categoria', slug='mac') }}" class="btn btn-feature-primary">
+                Más información
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 3. CATEGORÍAS ELEGANTES -->
+<!-- ============================================ -->
+<section class="categories-elegant-section">
+    <div class="container">
+        <div class="row g-4">
+            <!-- iPhone -->
+            <div class="col-md-4">
+                <div class="category-elegant-card iphone-elegant">
+                    <div class="category-elegant-content">
+                        <span class="category-elegant-icon"><i class="fab fa-apple"></i></span>
+                        <h3 class="category-elegant-title">iPhone</h3>
+                        <p class="category-elegant-desc">Dile hola a la nueva generación de iPhone.</p>
+                        <div class="category-elegant-actions">
+                            <a href="{{ url_for('producto.por_categoria', slug='iphone') }}" class="btn-elegant-outline">
+                                Más información
+                            </a>
+                            <a href="{{ url_for('producto.por_categoria', slug='iphone') }}" class="btn-elegant-primary">
+                                Comprar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MacBook Air -->
+            <div class="col-md-4">
+                <div class="category-elegant-card macbook-elegant">
+                    <div class="category-elegant-content">
+                        <span class="category-elegant-icon"><i class="fab fa-apple"></i></span>
+                        <h3 class="category-elegant-title">MacBook Air</h3>
+                        <p class="category-elegant-desc">Ahora con los superpoderes del chip M5.</p>
+                        <div class="category-elegant-actions">
+                            <a href="{{ url_for('producto.por_categoria', slug='mac') }}" class="btn-elegant-outline">
+                                Más información
+                            </a>
+                            <a href="{{ url_for('producto.por_categoria', slug='mac') }}" class="btn-elegant-primary">
+                                Comprar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- iPad Air -->
+            <div class="col-md-4">
+                <div class="category-elegant-card ipad-elegant">
+                    <div class="category-elegant-content">
+                        <span class="category-elegant-icon"><i class="fab fa-apple"></i></span>
+                        <h3 class="category-elegant-title">iPad Air</h3>
+                        <p class="category-elegant-desc">Ahora con los superpoderes del chip M4.</p>
+                        <div class="category-elegant-actions">
+                            <a href="{{ url_for('producto.por_categoria', slug='ipad') }}" class="btn-elegant-outline">
+                                Más información
+                            </a>
+                            <a href="{{ url_for('producto.por_categoria', slug='ipad') }}" class="btn-elegant-primary">
+                                Comprar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 4. PRODUCTOS DESTACADOS -->
+<!-- ============================================ -->
+<section class="featured-products-section">
+    <div class="container">
+        <div class="featured-header text-center">
+            <h2 class="featured-title">Descubre lo último en innovación</h2>
+            <p class="featured-subtitle">Tecnología diseñada para enriquecer tu vida.</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Apple Watch Series 11 -->
+            <div class="col-md-6">
+                <div class="featured-card watch-card">
+                    <div class="card-content">
+                        <div class="card-badge">Nuevo</div>
+                        <h3 class="card-title">Apple Watch Series 11</h3>
+                        <p class="card-description">Una gran forma de cuidar tu salud.</p>
+                        <div class="card-actions">
+                            <a href="{{ url_for('producto.por_categoria', slug='apple-watch') }}" class="btn btn-outline-light">
+                                Más información
+                            </a>
+                            <a href="{{ url_for('producto.por_categoria', slug='apple-watch') }}" class="btn btn-primary-light">
+                                Comprar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AirPods Pro 3 -->
+            <div class="col-md-6">
+                <div class="featured-card airpods-card">
+                    <div class="card-content">
+                        <div class="card-badge">Nuevo</div>
+                        <h3 class="card-title">AirPods Pro 3</h3>
+                        <p class="card-description">
+                            La mejor Cancelación Activa de Ruido del mundo en audífonos internos.<sup>1</sup>
+                        </p>
+                        <div class="card-actions">
+                            <a href="{{ url_for('producto.por_categoria', slug='airpods') }}" class="btn btn-outline-light">
+                                Más información
+                            </a>
+                            <a href="{{ url_for('producto.por_categoria', slug='airpods') }}" class="btn btn-primary-light">
+                                Comprar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 5. PRODUCTOS (grid) - IMAGEN DESTACADA -->
+<!-- ============================================ -->
+<section class="products-section py-5" id="productos">
+    <div class="container">
+        <div class="row g-4">
+            {% for producto in productos %}
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="product-card">
+                    <a href="{{ url_for('producto.detalle', producto_id=producto.id) }}" class="text-decoration-none">
+                        <div class="product-image">
+                            <img src="{{ producto.imagen_url }}" 
+                                 alt="{{ producto.nombre }}" 
+                                 loading="lazy"
+                                 onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'text-align:center;padding:40px;\'><i class=\'fas fa-image fa-3x text-muted\'></i><p style=\'font-size:0.8rem;color:#86868b;margin-top:8px;\'>{{ producto.nombre }}</p></div>'">
+                            <!-- BADGE DE OFERTA -->
+                            {% if producto.precio_base < 500 %}
+                            <span class="badge-oferta">Oferta</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">{{ producto.nombre }}</h3>
+                            <p class="product-description">{{ producto.descripcion[:60] if producto.descripcion else '' }}...</p>
+                            <div class="product-price">${{ "%.2f"|format(producto.precio_base) }}</div>
+                            <div class="product-actions">
+                                {% if current_user.is_authenticated %}
+                                <button class="btn btn-apple btn-sm w-100 btn-agregar-carrito" 
+                                        data-variante-id="{{ producto.variantes[0].id if producto.variantes else '' }}"
+                                        data-cantidad="1">
+                                    <i class="fas fa-plus me-1"></i> Agregar
+                                </button>
+                                {% else %}
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-apple btn-sm w-100">
+                                    <i class="fas fa-plus me-1"></i> Agregar
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-box-open fa-4x text-muted mb-4"></i>
+                <h4 class="fw-light">No hay productos disponibles</h4>
+                <p class="text-muted">Pronto agregaremos nuevos productos</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if total_pages and total_pages > 1 %}
+        <nav aria-label="Paginación" class="mt-5">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('producto.index', page=page-1, search=search, categoria=selected_categoria) if page > 1 else '#' }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                    <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                    {% elif p <= 3 or p > total_pages - 2 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('producto.index', page=p, search=search, categoria=selected_categoria) }}">{{ p }}</a>
+                    </li>
+                    {% elif p == 4 and total_pages > 6 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('producto.index', page=page+1, search=search, categoria=selected_categoria) if page < total_pages else '#' }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- 6. NOTA LEGAL -->
+<!-- ============================================ -->
+<section class="legal-note">
+    <div class="container">
+        <p class="legal-text small text-muted">
+            <sup>1</sup> Pruebas realizadas por Apple en julio de 2025 usando unidades AirPods Pro 3 enlazadas con unidades iPhone 16 con versiones preliminares de firmware de los AirPods y iOS 26. La prueba de reducción de ruido se realizó según la norma IEC 60268-24. La comparación se realizó con los audífonos internos inalámbricos más vendidos disponibles.
+        </p>
+    </div>
+</section>
+{% endblock %}

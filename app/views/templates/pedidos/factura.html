@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Factura #{{ pedido.id[:8] }} - Tienda Apple{% endblock %}
+
+{% block content %}
+<div class="container" id="factura">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <!-- Encabezado -->
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <h2 class="fw-bold">Tienda Apple</h2>
+                            <p class="text-muted mb-0">{{ empresa.direccion }}</p>
+                            <p class="text-muted mb-0">Tel: {{ empresa.telefono }}</p>
+                            <p class="text-muted mb-0">Email: {{ empresa.email }}</p>
+                            <p class="text-muted">CIF: {{ empresa.cif }}</p>
+                        </div>
+                        <div class="col-6 text-end">
+                            <h3 class="text-uppercase text-muted">Factura</h3>
+                            <h5 class="fw-bold">#{{ pedido.id[:8] }}</h5>
+                            <p class="mb-0">Fecha: {{ now.strftime('%d/%m/%Y') }}</p>
+                            <p class="mb-0">Pedido: {{ pedido.fecha_pedido[:10] }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Cliente -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold">Cliente</h6>
+                            <p class="mb-0">{{ pedido.usuario.nombre_completo }}</p>
+                            <p class="mb-0">{{ pedido.usuario.email }}</p>
+                            <p class="mb-0">{{ pedido.usuario.telefono or 'Sin teléfono' }}</p>
+                            <p class="mb-0">{{ pedido.direccion_envio.calle }} {{ pedido.direccion_envio.numero or '' }}</p>
+                            <p class="mb-0">{{ pedido.direccion_envio.codigo_postal }} {{ pedido.direccion_envio.ciudad }}</p>
+                            <p class="mb-0">{{ pedido.direccion_envio.pais }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Productos -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr><th>#</th><th>Producto</th><th>Variante</th><th class="text-end">Precio</th><th class="text-center">Cantidad</th><th class="text-end">Total</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for linea in pedido.get_lineas() %}
+                                {% set producto = linea.get_producto() if linea else None %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ producto.nombre if producto else 'N/A' }}</td>
+                                    <td>{% if linea.variante.color %}{{ linea.variante.color }}{% endif %}{% if linea.variante.capacidad %} - {{ linea.variante.capacidad }}{% endif %}</td>
+                                    <td class="text-end">${{ "%.2f"|format(linea.precio_unitario) }}</td>
+                                    <td class="text-center">{{ linea.cantidad }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(linea.total_linea) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr><td colspan="5" class="text-end fw-bold">Subtotal</td><td class="text-end">${{ "%.2f"|format(pedido.subtotal) }}</td></tr>
+                                <tr><td colspan="5" class="text-end">IVA (21%)</td><td class="text-end">${{ "%.2f"|format(pedido.impuestos) }}</td></tr>
+                                <tr><td colspan="5" class="text-end">Envío</td><td class="text-end">${{ "%.2f"|format(pedido.gastos_envio) }}</td></tr>
+                                {% if pedido.descuento_total > 0 %}
+                                <tr><td colspan="5" class="text-end text-success">Descuentos</td><td class="text-end text-success">-${{ "%.2f"|format(pedido.descuento_total) }}</td></tr>
+                                {% endif %}
+                                <tr class="table-active"><td colspan="5" class="text-end fw-bold">Total</td><td class="text-end fw-bold">${{ "%.2f"|format(pedido.total) }}</td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Método de pago y notas -->
+                    <div class="row">
+                        <div class="col-6"><p><strong>Método de pago:</strong> {{ pedido.metodo_pedido|title }}</p>
+                        <p><strong>Estado:</strong> <span class="badge bg-{{ pedido.get_estado_class() }}">{{ pedido.estado|title }}</span></p></div>
+                        <div class="col-6 text-end">{% if pedido.notas %}<p><strong>Notas:</strong> {{ pedido.notas }}</p>{% endif %}</div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <button onclick="window.print()" class="btn btn-dark btn-lg me-2"><i class="fas fa-print me-2"></i> Imprimir / PDF</button>
+                            <a href="{{ url_for('pedido.detalle', pedido_id=pedido.id) }}" class="btn btn-outline-secondary btn-lg"><i class="fas fa-arrow-left me-2"></i> Volver al pedido</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>@media print{.navbar-apple,.footer-apple,.btn,.btn-lg,.btn-dark,.btn-outline-secondary{display:none !important}.card{border:none !important;box-shadow:none !important}.card-body{padding:0 !important}.table-bordered{border:1px solid #dee2e6 !important}.table-bordered th,.table-bordered td{border:1px solid #dee2e6 !important}body{background:white !important;padding:0 !important}.container{max-width:100% !important}}</style>
+{% endblock %}
