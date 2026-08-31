@@ -40,10 +40,9 @@ def create_app(config_name='default'):
     # Cargar configuración
     app.config.from_object(config[config_name])
     
-    # ===== CONFIGURACIÓN PARA VERCEL (producción) =====
+    # ===== CONFIGURACIÓN PARA VERCEL =====
     # Si está en producción o Vercel, deshabilitar sesiones basadas en archivos
     if config_name == 'production' or os.environ.get('VERCEL'):
-        # Desactivar sesiones en disco (no permitido en Vercel)
         app.config['SESSION_TYPE'] = 'null'
         app.config['SESSION_PERMANENT'] = False
         app.config['SESSION_USE_SIGNER'] = True
@@ -80,12 +79,10 @@ def create_app(config_name='default'):
 
 def setup_logging(app):
     """Configurar sistema de logging"""
-    # Si está en Vercel, logs a stdout (consola)
+    # Si está en Vercel, logs a stdout
     if os.environ.get('VERCEL') or app.config.get('ENV') == 'production':
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s'
-        ))
+        handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
         handler.setLevel(logging.INFO)
         app.logger.addHandler(handler)
         app.logger.setLevel(logging.INFO)
