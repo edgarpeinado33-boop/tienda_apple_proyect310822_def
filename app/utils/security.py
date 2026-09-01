@@ -282,14 +282,15 @@ def init_security(app):
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response.headers['Permissions-Policy'] = "geolocation=(), microphone=(), camera=()"
         
-        # CSP - Content Security Policy
+        # CSP - Content Security Policy (ACTUALIZADO)
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com; "
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://www.gstatic.com https://translate.google.com https://translate.googleapis.com; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://www.gstatic.com; "
             "img-src 'self' data: https://images.unsplash.com https://*.supabase.co; "
             "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
             "connect-src 'self' https://*.supabase.co; "
+            "frame-src https://translate.google.com; "
             "frame-ancestors 'none'"
         )
         response.headers['Content-Security-Policy'] = csp
