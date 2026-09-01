@@ -32,13 +32,22 @@ def load_user(user_id):
         return None
 
 def create_app(config_name='default'):
-    """Crear y configurar la aplicación Flask"""
+    """
+    Crear y configurar la aplicación Flask.
+    Si config_name='production', valida que las variables de entorno estén configuradas.
+    """
     app = Flask(__name__, 
                 template_folder='views/templates',
                 static_folder='views/static')
     
     # Cargar configuración
     app.config.from_object(config[config_name])
+    
+    # ===== VALIDACIÓN PARA PRODUCCIÓN =====
+    if config_name == 'production':
+        # La clase ProductionConfig tiene un método init_app que valida las variables
+        if hasattr(config[config_name], 'init_app'):
+            config[config_name].init_app(app)
     
     # ===== CONFIGURACIÓN PARA VERCEL =====
     # Si está en producción o Vercel, deshabilitar sesiones basadas en archivos
