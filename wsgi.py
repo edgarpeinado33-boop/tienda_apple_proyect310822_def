@@ -1,11 +1,12 @@
-# wsgi.py - Punto de entrada para Vercel (sin verificación global)
+# wsgi.py - Punto de entrada para Vercel (CORREGIDO)
 import sys
 import os
 import logging
 
+# Configurar logging
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-# Verificar variables de entorno (solo informativo)
+# 1. Verificar variables de entorno (esto no necesita contexto)
 logging.info("=== VARIABLES DE ENTORNO ===")
 for var in ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SECRET_KEY']:
     val = os.getenv(var)
@@ -15,22 +16,22 @@ for var in ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SECRET_KEY']:
     else:
         logging.error(f"❌ {var} NO DEFINIDA")
 
-# Crear la aplicación (esto sí debe estar en global)
+# 2. Crear la aplicación
 from app import create_app
 app = create_app('production')
-application = app
 
-# Opcional: probar Supabase dentro del contexto de la aplicación
-# pero solo para logging, no es necesario para el funcionamiento
-with app.app_context():
-    try:
+# 3. Ahora, dentro del contexto de la aplicación, probar Supabase
+try:
+    with app.app_context():
         from app.utils.supabase_client import get_supabase
         supabase = get_supabase()
-        # Hacer una consulta ligera para probar
+        # Consulta simple para verificar conexión
         result = supabase.table('producto').select('*').limit(1).execute()
-        logging.info(f"✅ Conexión a Supabase OK. Productos: {result.count}")
-    except Exception as e:
-        logging.error(f"⚠️ Supabase connection test failed: {str(e)}")
-        # No lanzamos excepción para que la app arranque igual
+        logging.info(f"✅ Conexión a Supabase exitosa. Primer producto: {result.data[0] if result.data else 'ninguno'}")
+except Exception as e:
+    logging.exception("⚠️ Error al conectar a Supabase (la app seguirá arrancando):")
+
+# Vercel espera 'application'
+application = app
 
 logging.info("🚀 Aplicación iniciada correctamente")
