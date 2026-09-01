@@ -10,5 +10,6 @@
       "src": "/(.*)",
       "dest": "wsgi.py"
     }
-  ]
+  ],
+  "buildCommand": "python build.py"
 }
