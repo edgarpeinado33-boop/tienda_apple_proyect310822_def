@@ -6,7 +6,6 @@ from app.models.producto import Producto, VarianteProducto
 from app.models.categoria import Categoria
 from app.utils.supabase_client import get_supabase
 import logging
-import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -45,45 +44,11 @@ def index():
                              total_pages=result['total_pages'])
     except Exception as e:
         logger.error(f'Error cargando productos: {str(e)}')
-        logger.error(traceback.format_exc())
         flash('Error cargando productos', 'danger')
         return render_template('productos/index.html', 
                              productos=[], 
                              categorias=[],
                              page=1)
-
-
-# ============================================
-# RUTA DE DEPURACIÓN (DIAGNÓSTICO)
-# ============================================
-
-@producto_bp.route('/debug')
-def debug():
-    """Ruta de diagnóstico para verificar conexión y tablas"""
-    try:
-        supabase = get_supabase()
-        
-        # Probar tabla producto
-        prod_result = supabase.table('producto').select('*').limit(1).execute()
-        producto = prod_result.data[0] if prod_result.data else None
-        
-        # Probar tabla categoria
-        cat_result = supabase.table('categoria').select('*').limit(1).execute()
-        categoria = cat_result.data[0] if cat_result.data else None
-        
-        return jsonify({
-            'status': 'ok',
-            'producto': producto,
-            'categoria': categoria,
-            'producto_count': prod_result.count,
-            'categoria_count': cat_result.count
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e),
-            'traceback': traceback.format_exc()
-        }), 500
 
 
 # ============================================
@@ -114,6 +79,7 @@ def por_categoria(slug):
                 p = item['producto']
                 if p.get('estado') == 'activo':
                     producto_obj = Producto(p)
+                    # Cargar variantes para cada producto
                     producto_obj.get_variantes()
                     productos.append(producto_obj)
         
