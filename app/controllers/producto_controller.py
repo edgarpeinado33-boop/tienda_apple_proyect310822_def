@@ -6,6 +6,7 @@ from app.models.producto import Producto, VarianteProducto
 from app.models.categoria import Categoria
 from app.utils.supabase_client import get_supabase
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +45,9 @@ def index():
                              total_pages=result['total_pages'])
     except Exception as e:
         logger.error(f'Error cargando productos: {str(e)}')
-        flash('Error cargando productos', 'danger')
-        return render_template('productos/index.html', 
-                             productos=[], 
-                             categorias=[],
-                             page=1)
+        logger.error(traceback.format_exc())
+        # Lanza la excepción para que Vercel la muestre en logs (en lugar de renderizar vacío)
+        raise
 
 
 # ============================================
@@ -79,7 +78,6 @@ def por_categoria(slug):
                 p = item['producto']
                 if p.get('estado') == 'activo':
                     producto_obj = Producto(p)
-                    # Cargar variantes para cada producto
                     producto_obj.get_variantes()
                     productos.append(producto_obj)
         
@@ -88,6 +86,7 @@ def por_categoria(slug):
                              productos=productos)
     except Exception as e:
         logger.error(f'Error cargando productos por categoría: {str(e)}')
+        logger.error(traceback.format_exc())
         flash('Error cargando productos', 'danger')
         return redirect(url_for('producto.index'))
 
@@ -117,6 +116,7 @@ def buscar():
         return jsonify({'productos': productos_data})
     except Exception as e:
         logger.error(f'Error en búsqueda: {str(e)}')
+        logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
 
 
@@ -139,6 +139,7 @@ def variante_detalle(variante_id):
         })
     except Exception as e:
         logger.error(f'Error obteniendo variante: {str(e)}')
+        logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
 
 
@@ -163,7 +164,41 @@ def get_variante(producto_id):
         return jsonify({'id_variante': None}), 404
     except Exception as e:
         logger.error(f'Error obteniendo variante: {str(e)}')
+        logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
+
+# ============================================
+# RUTA DE DIAGNÓSTICO (DEBUG)
+# ============================================
+
+@producto_bp.route('/debug')
+def debug():
+    """Ruta de diagnóstico para verificar conexión y tablas"""
+    try:
+        supabase = get_supabase()
+        
+        # Probar tabla producto
+        prod_result = supabase.table('producto').select('*').limit(1).execute()
+        producto = prod_result.data[0] if prod_result.data else None
+        
+        # Probar tabla categoria
+        cat_result = supabase.table('categoria').select('*').limit(1).execute()
+        categoria = cat_result.data[0] if cat_result.data else None
+        
+        return jsonify({
+            'status': 'ok',
+            'producto': producto,
+            'categoria': categoria,
+            'producto_count': prod_result.count,
+            'categoria_count': cat_result.count
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 
 # ============================================
@@ -216,4 +251,5 @@ def detalle(producto_id):
                              relacionados=relacionados)
     except Exception as e:
         logger.error(f'Error cargando detalle de producto: {str(e)}')
+        logger.error(traceback.format_exc())
         abort(404)

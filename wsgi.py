@@ -1,27 +1,34 @@
-# wsgi.py - con prueba de conexión a Supabase
+# wsgi.py - Con verificación de Supabase
 import sys
 import os
 import logging
+
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-# Verificar variables
+# 1. Verificar variables de entorno
+logging.info("=== VARIABLES DE ENTORNO ===")
 for var in ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SECRET_KEY']:
     val = os.getenv(var)
-    logging.info(f"{var}: {'✅ configurada' if val else '❌ FALTA'}")
+    if val:
+        masked = val[:8] + '...' if len(val) > 8 else '***'
+        logging.info(f"✅ {var} = {masked}")
+    else:
+        logging.error(f"❌ {var} NO DEFINIDA")
 
-# Probar conexión a Supabase
+# 2. Probar conexión a Supabase
 try:
     from app.utils.supabase_client import get_supabase
     supabase = get_supabase()
-    # Intenta contar productos (consulta ligera)
-    result = supabase.table('producto').select('*', count='exact').limit(1).execute()
-    logging.info(f"✅ Conexión a Supabase exitosa. Productos encontrados: {result.count}")
+    # Intenta obtener 1 producto (consulta ligera)
+    result = supabase.table('producto').select('*').limit(1).execute()
+    logging.info(f"✅ Conexión exitosa. Primer producto: {result.data[0] if result.data else 'ninguno'}")
 except Exception as e:
-    logging.exception("💥 Error conectando a Supabase:")
-    raise  # Esto hará que Vercel muestre el error
+    logging.exception("💥 ERROR al conectar a Supabase:")
+    # No lanzamos excepción para que la app intente arrancar, pero el error quedará en logs
+    # Si quieres detener el despliegue, usa raise
 
-# Crear app
+# 3. Crear la aplicación
 from app import create_app
 app = create_app('production')
 application = app
-logging.info("🚀 App iniciada correctamente")
+logging.info("🚀 Aplicación iniciada")
