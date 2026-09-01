@@ -4,7 +4,7 @@ Controlador de Productos
 from flask import Blueprint, render_template, request, jsonify, abort, flash, redirect, url_for
 from app.models.producto import Producto, VarianteProducto
 from app.models.categoria import Categoria
-from app.utils.supabase_client import get_supabase
+from app.utils.supabase_client import get_supabase_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,18 +21,19 @@ def index():
     categoria = request.args.get('categoria', '')
     
     try:
-        categorias = Categoria.get_raices()
+        # Usar clave de servicio en todas las consultas
+        categorias = Categoria.get_raices(use_service=True)
         result = Producto.search(
             query=search,
             categoria=categoria,
             page=page,
             per_page=per_page,
-            solo_activos=True
+            solo_activos=True,
+            use_service=True
         )
         
-        # Cargar variantes para cada producto
         for producto in result['productos']:
-            producto.get_variantes()
+            producto.get_variantes(use_service=True)
         
         return render_template('productos/index.html',
                              productos=result['productos'],
@@ -51,15 +52,11 @@ def index():
                              page=1)
 
 
-# ============================================
-# RUTAS ESPECÍFICAS (ANTES DE LAS DINÁMICAS)
-# ============================================
-
 @producto_bp.route('/categoria/<slug>')
 def por_categoria(slug):
     """Productos por categoría"""
     try:
-        supabase = get_supabase()
+        supabase = get_supabase_service()  # Usar clave de servicio
         
         categoria = supabase.table('categoria').select('*').eq('slug', slug).execute()
         if not categoria.data:
@@ -79,8 +76,7 @@ def por_categoria(slug):
                 p = item['producto']
                 if p.get('estado') == 'activo':
                     producto_obj = Producto(p)
-                    # Cargar variantes para cada producto
-                    producto_obj.get_variantes()
+                    producto_obj.get_variantes(use_service=True)
                     productos.append(producto_obj)
         
         return render_template('productos/categoria.html',
@@ -102,7 +98,7 @@ def buscar():
         return jsonify({'productos': []})
     
     try:
-        result = Producto.search(query, page=1, per_page=limit)
+        result = Producto.search(query, page=1, per_page=limit, use_service=True)
         
         productos_data = []
         for producto in result['productos']:
@@ -124,7 +120,7 @@ def buscar():
 def variante_detalle(variante_id):
     """Obtener detalles de una variante (API)"""
     try:
-        variante = VarianteProducto.find_by_id(variante_id)
+        variante = VarianteProducto.find_by_id(variante_id, use_service=True)
         if not variante:
             return jsonify({'error': 'Variante no encontrada'}), 404
         
@@ -135,22 +131,18 @@ def variante_detalle(variante_id):
             'precio_extra': variante.precio_extra,
             'precio_total': variante.precio_total,
             'stock_disponible': variante.stock_disponible,
-            'imagenes': variante.get_imagenes()
+            'imagenes': variante.get_imagenes(use_service=True)
         })
     except Exception as e:
         logger.error(f'Error obteniendo variante: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
 
-# ============================================
-# RUTA PARA OBTENER VARIANTE POR PRODUCTO
-# ============================================
-
 @producto_bp.route('/<producto_id>/variante')
 def get_variante(producto_id):
     """Obtener una variante del producto (API)"""
     try:
-        supabase = get_supabase()
+        supabase = get_supabase_service()
         result = supabase.table('variante_producto')\
             .select('id_variante')\
             .eq('id_producto', producto_id)\
@@ -166,15 +158,11 @@ def get_variante(producto_id):
         return jsonify({'error': str(e)}), 500
 
 
-# ============================================
-# RUTA DINÁMICA (SIEMPRE AL FINAL)
-# ============================================
-
 @producto_bp.route('/<producto_id>')
 def detalle(producto_id):
     """Detalle de producto"""
     try:
-        supabase = get_supabase()
+        supabase = get_supabase_service()
         
         result = supabase.table('producto')\
             .select('*, variante_producto(*, imagen_producto(*))')\
@@ -194,7 +182,7 @@ def detalle(producto_id):
         
         producto.categorias = [item['categoria'] for item in categorias.data if item.get('categoria')]
         
-        reseñas = producto.get_resenas()
+        reseñas = producto.get_resenas(use_service=True)
         
         relacionados = []
         if producto.categorias:
