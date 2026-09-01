@@ -1,7 +1,7 @@
 """
 Modelo de Producto
 """
-from app.utils.supabase_client import get_supabase, get_supabase_service
+from app.utils.supabase_client import get_supabase
 from datetime import datetime
 import logging
 
@@ -31,20 +31,13 @@ class Producto:
             self.variantes = []
             self.categorias = []
     
-    def get_variantes(self, use_service=False):
-        """
-        Obtener variantes del producto.
-        Si use_service=True, usa la clave de servicio.
-        """
+    def get_variantes(self):
+        """Obtener variantes del producto"""
         if self.variantes:
             return self.variantes
         
         try:
-            if use_service:
-                supabase = get_supabase_service()
-            else:
-                supabase = get_supabase()
-                
+            supabase = get_supabase()
             result = supabase.table('variante_producto')\
                 .select('*')\
                 .eq('id_producto', self.id)\
@@ -75,16 +68,13 @@ class Producto:
             logger.error(f'Error obteniendo categorías: {str(e)}')
             return []
     
-    def get_resenas(self, approved_only=True, use_service=False):
+    def get_resenas(self, approved_only=True):
         """Obtener reseñas del producto"""
         try:
-            if use_service:
-                supabase = get_supabase_service()
-            else:
-                supabase = get_supabase()
+            supabase = get_supabase()
             
             # Obtener variantes primero
-            variantes = self.get_variantes(use_service=use_service)
+            variantes = self.get_variantes()
             if not variantes:
                 return []
             
@@ -162,18 +152,12 @@ class Producto:
             return None
     
     @staticmethod
-    def search(query=None, categoria=None, page=1, per_page=12, solo_activos=True, use_service=False):
-        """
-        Buscar productos con filtros.
-        Si use_service=True, usa la clave de servicio.
-        """
+    def search(query=None, categoria=None, page=1, per_page=12, solo_activos=True):
+        """Buscar productos con filtros"""
         try:
-            if use_service:
-                supabase = get_supabase_service()
-            else:
-                supabase = get_supabase()
+            supabase = get_supabase()
             
-            # Query base
+            # Query base - TRAER TODOS LOS PRODUCTOS
             db_query = supabase.table('producto').select('*')
             
             # Filtros
@@ -284,14 +268,10 @@ class VarianteProducto:
             logger.error(f'Error obteniendo producto: {str(e)}')
             return None
     
-    def get_imagenes(self, use_service=False):
+    def get_imagenes(self):
         """Obtener imágenes de la variante"""
         try:
-            if use_service:
-                supabase = get_supabase_service()
-            else:
-                supabase = get_supabase()
-                
+            supabase = get_supabase()
             result = supabase.table('imagen_producto')\
                 .select('*')\
                 .eq('id_variante', self.id)\
@@ -368,14 +348,10 @@ class VarianteProducto:
             return None
     
     @staticmethod
-    def find_by_id(variante_id, use_service=False):
+    def find_by_id(variante_id):
         """Buscar variante por ID"""
         try:
-            if use_service:
-                supabase = get_supabase_service()
-            else:
-                supabase = get_supabase()
-                
+            supabase = get_supabase()
             result = supabase.table('variante_producto')\
                 .select('*')\
                 .eq('id_variante', variante_id)\

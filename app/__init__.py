@@ -32,35 +32,13 @@ def load_user(user_id):
         return None
 
 def create_app(config_name='default'):
-    """
-    Crear y configurar la aplicación Flask.
-    Si config_name='production', valida que las variables de entorno estén configuradas.
-    """
+    """Crear y configurar la aplicación Flask"""
     app = Flask(__name__, 
                 template_folder='views/templates',
                 static_folder='views/static')
     
     # Cargar configuración
     app.config.from_object(config[config_name])
-    
-    # ===== FORZAR SECRET_KEY =====
-    # Asegurar que SECRET_KEY esté definida en la aplicación
-    if not app.config.get('SECRET_KEY'):
-        import secrets
-        app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
-        app.logger.warning("SECRET_KEY no estaba definida. Generada automáticamente.")
-    
-    # Asegurar que JWT_SECRET_KEY también esté definida
-    if not app.config.get('JWT_SECRET_KEY'):
-        import secrets
-        app.config['JWT_SECRET_KEY'] = secrets.token_urlsafe(32)
-        app.logger.warning("JWT_SECRET_KEY no estaba definida. Generada automáticamente.")
-    
-    # ===== VALIDACIÓN PARA PRODUCCIÓN =====
-    if config_name == 'production':
-        # La clase ProductionConfig tiene un método init_app que valida las variables
-        if hasattr(config[config_name], 'init_app'):
-            config[config_name].init_app(app)
     
     # ===== CONFIGURACIÓN PARA VERCEL =====
     # Si está en producción o Vercel, deshabilitar sesiones basadas en archivos

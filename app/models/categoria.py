@@ -1,7 +1,7 @@
 """
 Modelo de Categoría
 """
-from app.utils.supabase_client import get_supabase, get_supabase_service
+from app.utils.supabase_client import get_supabase
 import logging
 
 logger = logging.getLogger(__name__)
@@ -155,17 +155,10 @@ class Categoria:
             return None
     
     @staticmethod
-    def get_raices(use_service=False):
-        """
-        Obtener categorías raíz.
-        Si use_service=True, usa la clave de servicio (para Vercel/producción).
-        """
+    def get_raices():
+        """Obtener categorías raíz"""
         try:
-            if use_service:
-                supabase = get_supabase_service()
-            else:
-                supabase = get_supabase()
-            
+            supabase = get_supabase()
             result = supabase.table('categoria')\
                 .select('*')\
                 .is_('id_categoria_padre', None)\
