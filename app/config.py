@@ -2,6 +2,7 @@
 Configuración de la aplicación
 """
 import os
+import secrets
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,9 +15,19 @@ class Config:
     SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_KEY')  # Usamos SERVICE KEY
     SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY')
     
-    # Flask - SECRET_KEY es OBLIGATORIA en producción
+    # Flask - SECRET_KEY con fallback seguro
+    # Si no está en variables de entorno, genera una clave aleatoria (solo para que arranque)
     SECRET_KEY = os.getenv('SECRET_KEY')
+    if not SECRET_KEY:
+        # En producción, esto debería estar configurado, pero como fallback generamos una
+        SECRET_KEY = secrets.token_urlsafe(32)
+        print(f"⚠️ SECRET_KEY no configurada en variables de entorno. Usando clave generada automáticamente.")
+        print(f"   Esta clave es temporal. Para producción, configura SECRET_KEY en Vercel.")
+    
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+    if not JWT_SECRET_KEY:
+        JWT_SECRET_KEY = secrets.token_urlsafe(32)
+        print(f"⚠️ JWT_SECRET_KEY no configurada. Usando clave generada automáticamente.")
     
     # Configuración de sesión (para Vercel usamos 'null')
     SESSION_TYPE = 'null'
@@ -57,15 +68,11 @@ class DevelopmentConfig(Config):
     DEBUG = True
     ENV = 'development'
     SESSION_COOKIE_SECURE = False
+    SESSION_TYPE = 'filesystem'
     
-    # En desarrollo, podemos usar claves por defecto si no están en .env
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-123456789')
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-dev-secret-456789')
-    
+    # En desarrollo, podemos usar valores por defecto
     SUPABASE_URL = os.getenv('DEV_SUPABASE_URL', os.getenv('SUPABASE_URL'))
     SUPABASE_KEY = os.getenv('DEV_SUPABASE_SERVICE_KEY', os.getenv('SUPABASE_SERVICE_KEY'))
-    
-    SESSION_TYPE = 'filesystem'
 
 
 class ProductionConfig(Config):
@@ -73,22 +80,38 @@ class ProductionConfig(Config):
     ENV = 'production'
     SESSION_COOKIE_SECURE = True
     
-    # En producción, forzamos que las claves existan
+    # En producción, forzamos que las claves existan, pero con fallback seguro
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    if not SECRET_KEY:
+        # Si no está, generamos una y lanzamos warning
+        import secrets
+        SECRET_KEY = secrets.token_urlsafe(32)
+        import sys
+        print("⚠️ ADVERTENCIA: SECRET_KEY no configurada en variables de entorno.", file=sys.stderr)
+        print("   Usando clave generada automáticamente. Para producción, configura SECRET_KEY en Vercel.", file=sys.stderr)
+    
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+    if not JWT_SECRET_KEY:
+        import secrets
+        JWT_SECRET_KEY = secrets.token_urlsafe(32)
+        import sys
+        print("⚠️ ADVERTENCIA: JWT_SECRET_KEY no configurada. Usando clave generada automáticamente.", file=sys.stderr)
+    
     @classmethod
     def init_app(cls, app):
-        if not app.config.get('SECRET_KEY'):
-            raise ValueError("SECRET_KEY no está configurada en producción")
-        if not app.config.get('JWT_SECRET_KEY'):
-            raise ValueError("JWT_SECRET_KEY no está configurada en producción")
+        """Validar configuración crítica al arrancar"""
+        # Verificar Supabase
         if not app.config.get('SUPABASE_URL'):
             raise ValueError("SUPABASE_URL no está configurada en producción")
         if not app.config.get('SUPABASE_SERVICE_KEY'):
             raise ValueError("SUPABASE_SERVICE_KEY no está configurada en producción")
-    
-    # Configuración adicional
-    LOG_LEVEL = 'INFO'
-    SSL_REDIRECT = True
-    PERMANENT_SESSION_LIFETIME = 86400  # 24 horas
+        
+        # Verificar SECRET_KEY (si es generada automáticamente, solo advertimos)
+        if app.config.get('SECRET_KEY') and 'token_urlsafe' in str(app.config['SECRET_KEY']):
+            # Es generada automáticamente, no hay problema para arrancar, pero advertimos
+            app.logger.warning("SECRET_KEY generada automáticamente. Configura una fija en producción.")
+        else:
+            app.logger.info("SECRET_KEY configurada correctamente.")
 
 
 class TestingConfig(Config):

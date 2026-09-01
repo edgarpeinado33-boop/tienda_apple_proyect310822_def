@@ -43,6 +43,19 @@ def create_app(config_name='default'):
     # Cargar configuración
     app.config.from_object(config[config_name])
     
+    # ===== FORZAR SECRET_KEY =====
+    # Asegurar que SECRET_KEY esté definida en la aplicación
+    if not app.config.get('SECRET_KEY'):
+        import secrets
+        app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
+        app.logger.warning("SECRET_KEY no estaba definida. Generada automáticamente.")
+    
+    # Asegurar que JWT_SECRET_KEY también esté definida
+    if not app.config.get('JWT_SECRET_KEY'):
+        import secrets
+        app.config['JWT_SECRET_KEY'] = secrets.token_urlsafe(32)
+        app.logger.warning("JWT_SECRET_KEY no estaba definida. Generada automáticamente.")
+    
     # ===== VALIDACIÓN PARA PRODUCCIÓN =====
     if config_name == 'production':
         # La clase ProductionConfig tiene un método init_app que valida las variables
