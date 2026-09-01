@@ -1,11 +1,11 @@
-# wsgi.py - Con verificación de Supabase
+# wsgi.py - Punto de entrada para Vercel (sin verificación global)
 import sys
 import os
 import logging
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-# 1. Verificar variables de entorno
+# Verificar variables de entorno (solo informativo)
 logging.info("=== VARIABLES DE ENTORNO ===")
 for var in ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SECRET_KEY']:
     val = os.getenv(var)
@@ -15,20 +15,22 @@ for var in ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SECRET_KEY']:
     else:
         logging.error(f"❌ {var} NO DEFINIDA")
 
-# 2. Probar conexión a Supabase
-try:
-    from app.utils.supabase_client import get_supabase
-    supabase = get_supabase()
-    # Intenta obtener 1 producto (consulta ligera)
-    result = supabase.table('producto').select('*').limit(1).execute()
-    logging.info(f"✅ Conexión exitosa. Primer producto: {result.data[0] if result.data else 'ninguno'}")
-except Exception as e:
-    logging.exception("💥 ERROR al conectar a Supabase:")
-    # No lanzamos excepción para que la app intente arrancar, pero el error quedará en logs
-    # Si quieres detener el despliegue, usa raise
-
-# 3. Crear la aplicación
+# Crear la aplicación (esto sí debe estar en global)
 from app import create_app
 app = create_app('production')
 application = app
-logging.info("🚀 Aplicación iniciada")
+
+# Opcional: probar Supabase dentro del contexto de la aplicación
+# pero solo para logging, no es necesario para el funcionamiento
+with app.app_context():
+    try:
+        from app.utils.supabase_client import get_supabase
+        supabase = get_supabase()
+        # Hacer una consulta ligera para probar
+        result = supabase.table('producto').select('*').limit(1).execute()
+        logging.info(f"✅ Conexión a Supabase OK. Productos: {result.count}")
+    except Exception as e:
+        logging.error(f"⚠️ Supabase connection test failed: {str(e)}")
+        # No lanzamos excepción para que la app arranque igual
+
+logging.info("🚀 Aplicación iniciada correctamente")
